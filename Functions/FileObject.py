@@ -8,18 +8,25 @@ import numpy as np
 import re
 
 class FileObject():
+    """
+    A class to read the output files of a NVT simulation. Customized to my specific applications.
+    """
     def __init__(self, file, file_type, dt=None, Temperature=None, N = None):
         """
         
 
         Parameters
         ----------
-        file : String, Path to File.
-        file_type : String,
-            Type of File
-        dt : Float, Timestep of Simulation in a.u. The default is None.
-        Temperature : Int, Temperature of Simulation. The default is None.
-        N : Int, Number of Atoms in the simulation. The default is None.
+        file : str
+            Path to File.
+        file_type : str
+            Type of File. Available options: "QE" or "i-Pi.out"
+        dt : float 
+            Timestep of Simulation in a.u. The default is None.
+        Temperature : int
+            Temperature of Simulation. The default is None.
+        N : int 
+            Number of Atoms in the simulation. The default is None.
 
         Returns
         -------
@@ -45,9 +52,6 @@ class FileObject():
         
         
         self.extractInfo()
-        
-        self.au_to_s= 4.83781*1e-17 
-        self.s_to_ps=1e12
         
         
         
@@ -79,12 +83,14 @@ class FileObject():
             lines=f.readlines()[1:]
     
             Nframes = len(lines)
+            
+            #empty arrays to store values
             steps = np.zeros((Nframes, 1), dtype=float) #iteration
             Energy = np.zeros((Nframes, 1), dtype=float)
             Pressure_elec = np.zeros((Nframes, 1), dtype=float)
             Pressure_tot = np.zeros((Nframes, 1), dtype=float)
         
-            
+            #extract and store values    
             for i,x in enumerate(lines): 
                 Energy[i] = float(x.split()[0]) #Ry Energy per atom
                 Pressure_elec[i] = float(x.split()[1])
@@ -97,13 +103,13 @@ class FileObject():
             self.Pressure_elec = Pressure_elec # in GPa
             self.steps=steps
             self.time = self.dt *steps* au_to_s * s_to_ps
-            self.dt = self.dt * au_to_s * s_to_ps
+            self.dt = self.dt * au_to_s * s_to_ps # convert a.u to ps
         
                 
             f.close()
             
         elif self.file_type=="i-Pi.out":
-        # i-Pi output
+        # i-Pi trajectory output
         
             f=open(self.file, "r")
             lines = f.readlines()
@@ -112,12 +118,28 @@ class FileObject():
             
             #detect current units of file
             for h in headers:
-                match = re.search(r'pressure_md\{(.+?)\}', h)
-                if match:
-                    pressure_units = match.group(1)
+                match_pressure = re.search(r'pressure_md\{(.+?)\}', h)
+                if match_pressure:
+                    pressure_units = match_pressure.group(1)
+                
+                match_time = re.search(r'time\{(.+?)\}', h)
+                if match_time:
+                    time_units = match_time.group(1)
+                    
+                match_KE= re.search(r'kinetic_md\{(.+?)\}', h)
+                if match_KE:
+                    KE_units = match_KE.group(1)
+                
+                match_PE= re.search(r'potential\{(.+?)\}', h)
+                if match_PE:
+                    PE_units = match_PE.group(1)
+                    
+                
                     
            
             Nframes = len(values)
+            
+            #empty arrays to store values
             steps = np.zeros((Nframes, 1), dtype=float)
             time = np.zeros((Nframes, 1), dtype=float)
             conservedE = np.zeros((Nframes, 1), dtype=float)
@@ -149,9 +171,34 @@ class FileObject():
             
             #convert to desired unit
             if pressure_units=="bar":
-                self.Pressure_tot *= bar_to_GPa 
+                self.Pressure_tot *= bar_to_GPa
+                
+            elif pressure_units=="GPa" or pressure_units == "gigapascal":
+                pass
+       
+            else:
+                raise ValueError(
+                    f"Pressure unit {pressure_units} not implemented or detected.")
+                
+                
+            if time_units=="picosecond":
+                pass
+            else:
+                raise ValueError(
+                    f"Time unit {time_units} not implemented or detected.")
             
-          
+            if KE_units=="electronvolt":
+                pass
+            else:
+                raise ValueError(
+                   f"Energy unit {KE_units} not implemented or detected.")
+              
+            if PE_units=="electronvolt":
+                 pass
+            else:
+                 raise ValueError(
+                    f"Energy unit {KE_units} not implemented or detected.")
+                
             
             self.Volume = Volume
             self.Energy = KE+PE #eV
