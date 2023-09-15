@@ -222,6 +222,9 @@ def predict_forces(model, frames, kNM, forces_index):
     return forces_predicted
 
 
+def rs_to_gcm3(rs):
+    return 2.6960431 / rs**3
+
         
 
     
