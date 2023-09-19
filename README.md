@@ -21,7 +21,7 @@ git clone https://github.com/lab-cosmo/librascal.git
 cd librascal
 pip install -r requirements.txt
 ```
-Make sure to build the packages, as described in the instructions of the librascal page [a link](https://lab-cosmo.github.io/librascal/installation.html)
+Make sure to build the packages, as described in the instructions of the librascal page, [https://lab-cosmo.github.io/librascal/installation.html](https://lab-cosmo.github.io/librascal/installation.html).
 Create kernel, which is used in you jupyter notebooks
 ```
 ipython kernel install --user --name gap
